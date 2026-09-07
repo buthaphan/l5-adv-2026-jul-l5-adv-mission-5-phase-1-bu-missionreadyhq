@@ -1,8 +1,9 @@
+import "dotenv/config";
 import mongoose from "mongoose";
 import { Auction } from "../models/Auction.js";
 import { clearData, seedData } from "../src/seeder.js";
 
-const TEST_MONGO_URI = "mongodb://localhost:27017/trademe_test_db";
+const TEST_MONGO_URI = process.env.TEST_MONGO_URI;
 
 describe("Task 5: CLI Seeder Tool - clearData()", () => {
   beforeAll(async () => {
