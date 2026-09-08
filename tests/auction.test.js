@@ -51,4 +51,30 @@ describe("Get /auction/search", () => {
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("Keyword is required");
   });
+
+  test("should return an empty array when no actions match the keyword", async () => {
+    const response = await request(app)
+      .get("/auctions/search")
+      .query({ keyword: "banana" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
+  });
+
+  test("should match keywords regardless of letter case", async () => {
+    await Auction.create({
+      title: "Vintage Leather Jacket",
+      description: "1980s genuine leather jacket.",
+      start_price: 50,
+      reserve_price: 100,
+    });
+
+    const response = await request(app)
+      .get("/auctions/search")
+      .query({ keyword: "LEATHER" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0].title).toBe("Vintage Leather Jacket");
+  });
 });
