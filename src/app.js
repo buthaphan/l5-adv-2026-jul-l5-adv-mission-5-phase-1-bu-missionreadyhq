@@ -1,5 +1,5 @@
 import express from "express";
-import { Auction } from "../models/Auction";
+import { searchAuctions } from "./auctionService.js";
 
 export const app = express();
 
@@ -14,12 +14,7 @@ app.get("/auctions/search", async (req, res) => {
     });
   }
 
-  const auctions = await Auction.find({
-    $or: [
-      { title: { $regex: keyword, $options: "i" } },
-      { description: { $regex: keyword, $options: "i" } },
-    ],
-  });
+  const auctions = await searchAuctions(keyword);
 
   res.status(200).json(auctions);
 });
