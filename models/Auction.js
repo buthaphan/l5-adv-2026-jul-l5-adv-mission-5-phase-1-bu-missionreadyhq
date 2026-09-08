@@ -5,6 +5,7 @@ const auctionSchema = new mongoose.Schema({
   description: { type: String, required: true },
   start_price: { type: Number, required: true },
   reserve_price: { type: Number, required: true },
+  embedding: { type: [Number], default: [] },
 });
 
 export const Auction = mongoose.model("Auction", auctionSchema);

@@ -2,6 +2,7 @@ import "dotenv/config";
 import request from "supertest";
 
 import { Auction } from "../models/Auction.js";
+import { searchAuctions, createAuction } from "../src/auctionService.js";
 import { app } from "../src/app.js";
 import mongoose from "mongoose";
 
@@ -76,5 +77,30 @@ describe("Get /auction/search", () => {
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(1);
     expect(response.body[0].title).toBe("Vintage Leather Jacket");
+  });
+
+  test("should store an embedding on an auction", async () => {
+    const auction = await Auction.create({
+      title: "Vintage Leather Jacket",
+      description: "1980s genuine leather jacket.",
+      start_price: 50,
+      reserve_price: 100,
+      embedding: [0.1, 0.2, 0.3],
+    });
+
+    expect(auction.embedding).toEqual([0.1, 0.2, 0.3]);
+  });
+
+  test("should create an auction with an embedding", async () => {
+    const auction = await createAuction({
+      title: "Vintage Leather Jacket",
+      description: "1980s genuine leather jacket.",
+      start_price: 50,
+      reserve_price: 100,
+    });
+
+    expect(auction.embedding).toBeDefined();
+    expect(Array.isArray(auction.embedding)).toBe(true);
+    expect(auction.embedding.length).toBeGreaterThan(0);
   });
 });

@@ -35,3 +35,9 @@ export const calculateCosineSimilarity = (vectorA, vectorB) => {
 
   return dotProduct / (magnitudeA * magnitudeB);
 };
+
+export const rankAuctionsBySimilarity = (auctions) => {
+  return [...auctions].sort(
+    (auctionA, auctionB) => auctionB.similarity - auctionA.similarity,
+  );
+};
