@@ -44,4 +44,11 @@ describe("Get /auction/search", () => {
     expect(response.body).toHaveLength(1);
     expect(response.body[0].title).toBe("Vintage Leather Jacket");
   });
+
+  test("should return 400 when keyword is missing", async () => {
+    const response = await request(app).get("/auctions/search");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Keyword is required");
+  });
 });

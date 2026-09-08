@@ -8,6 +8,12 @@ app.use(express.json());
 app.get("/auctions/search", async (req, res) => {
   const { keyword } = req.query;
 
+  if (!keyword) {
+    return res.status(400).json({
+      error: "Keyword is required",
+    });
+  }
+
   const auctions = await Auction.find({
     $or: [
       { title: { $regex: keyword, $options: "i" } },
