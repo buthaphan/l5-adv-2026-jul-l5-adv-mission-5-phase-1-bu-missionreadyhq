@@ -12,6 +12,9 @@ jobs:
 
     env:
       TEST_MONGO_URI: mongodb://localhost:27017/trademe_test_db
+      AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+      AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}
 
     # Launch MongoDB as a service container for integration testing
     services:
