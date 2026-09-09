@@ -41,3 +41,11 @@ export const rankAuctionsBySimilarity = (auctions) => {
     (auctionA, auctionB) => auctionB.similarity - auctionA.similarity,
   );
 };
+
+export const calculateAuctionSimilarity = (queryEmbedding, auction) => {
+  return calculateCosineSimilarity(queryEmbedding, auction.embedding);
+};
+
+export const filterAuctionsBySimilarity = (auctions, threshold) => {
+  return auctions.filter((auction) => auction.similarity >= threshold);
+};

@@ -3,6 +3,7 @@ import {
   buildAuctionEmbeddingText,
   calculateCosineSimilarity,
   rankAuctionsBySimilarity,
+  calculateAuctionSimilarity,
 } from "../src/aiService.js";
 
 describe("Azure OpenAI embedding service", () => {
@@ -78,5 +79,31 @@ describe("Azure OpenAI embedding service", () => {
     expect(ranked[0].title).toBe("Auction B");
     expect(ranked[1].title).toBe("Auction A");
     expect(ranked[2].title).toBe("Auction C");
+  });
+
+  test("should calculate similarity between a query and an auction", () => {
+    const queryEmbedding = [1, 0];
+
+    const auction = {
+      title: "Vintage Leather Jacket",
+      embedding: [1, 0],
+    };
+
+    const similarity = calculateAuctionSimilarity(queryEmbedding, auction);
+
+    expect(similarity).toBe(1);
+  });
+
+  test("should calculate a lower similarity for different auction vectors", () => {
+    const queryEmbedding = [1, 0];
+
+    const auction = {
+      title: "Vintage Leather Jacket",
+      embedding: [0, 1],
+    };
+
+    const similarity = calculateAuctionSimilarity(queryEmbedding, auction);
+
+    expect(similarity).toBe(0);
   });
 });

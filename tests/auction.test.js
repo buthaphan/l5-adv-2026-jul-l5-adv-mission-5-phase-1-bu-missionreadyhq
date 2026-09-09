@@ -2,7 +2,17 @@ import "dotenv/config";
 import request from "supertest";
 
 import { Auction } from "../models/Auction.js";
-import { searchAuctions, createAuction } from "../src/auctionService.js";
+import {
+  searchAuctionsBySimilarity,
+  createAuction,
+  searchAuctionsBySemanticQuery,
+} from "../src/auctionService.js";
+
+import {
+  generateEmbedding,
+  filterAuctionsBySimilarity,
+} from "../src/aiService.js";
+
 import { app } from "../src/app.js";
 import mongoose from "mongoose";
 
@@ -102,5 +112,120 @@ describe("Get /auction/search", () => {
     expect(auction.embedding).toBeDefined();
     expect(Array.isArray(auction.embedding)).toBe(true);
     expect(auction.embedding.length).toBeGreaterThan(0);
+  });
+
+  test("should return auctions ranked by semantic similarity", async () => {
+    await Auction.create([
+      {
+        title: "Vintage Leather Jacket",
+        description: "1980s genuine leather jacket.",
+        start_price: 50,
+        reserve_price: 100,
+        embedding: [1, 0],
+      },
+      {
+        title: "Modern Wool Coat",
+        description: "Black wool coat in excellent condition.",
+        start_price: 80,
+        reserve_price: 150,
+        embedding: [0, 1],
+      },
+    ]);
+
+    const queryEmbedding = [1, 0];
+
+    const results = await searchAuctionsBySimilarity(queryEmbedding);
+
+    expect(results).toHaveLength(2);
+    expect(results[0].title).toBe("Vintage Leather Jacket");
+    expect(results[0].similarity).toBe(1);
+  });
+
+  test("should search auctions using a semantic query", async () => {
+    const leatherJacketEmbedding = await generateEmbedding(
+      "Vintage Leather Jacket. 1980s genuine leather jacket.",
+    );
+
+    const woolCoatEmbedding = await generateEmbedding(
+      "Modern Wool Coat. Black wool coat in excellent condition.",
+    );
+
+    await Auction.create([
+      {
+        title: "Vintage Leather Jacket",
+        description: "1980s genuine leather jacket.",
+        start_price: 50,
+        reserve_price: 100,
+        embedding: leatherJacketEmbedding,
+      },
+      {
+        title: "Modern Wool Coat",
+        description: "Black wool coat in excellent condition.",
+        start_price: 80,
+        reserve_price: 150,
+        embedding: woolCoatEmbedding,
+      },
+    ]);
+
+    const results = await searchAuctionsBySemanticQuery(
+      "second hand leather jacket",
+      0,
+    );
+
+    expect(results).toHaveLength(2);
+    expect(results[0].title).toBe("Vintage Leather Jacket");
+  });
+
+  test("should exclude auctions below the similarity threshold", async () => {
+    const results = [
+      {
+        title: "Vintage Leather Jacket",
+        similarity: 0.75,
+      },
+      {
+        title: "Modern Wool Coat",
+        similarity: 0.35,
+      },
+    ];
+
+    const filteredResults = filterAuctionsBySimilarity(results, 0.5);
+
+    expect(filteredResults).toHaveLength(1);
+    expect(filteredResults[0].title).toBe("Vintage Leather Jacket");
+  });
+
+  test("should only return semantically relevant auctions", async () => {
+    const leatherJacketEmbedding = await generateEmbedding(
+      "Vintage Leather Jacket. 1980s genuine leather jacket.",
+    );
+
+    const woolCoatEmbedding = await generateEmbedding(
+      "Modern Wool Coat. Black wool coat in excellent condition.",
+    );
+
+    await Auction.create([
+      {
+        title: "Vintage Leather Jacket",
+        description: "1980s genuine leather jacket.",
+        start_price: 50,
+        reserve_price: 100,
+        embedding: leatherJacketEmbedding,
+      },
+      {
+        title: "Modern Wool Coat",
+        description: "Black wool coat in excellent condition.",
+        start_price: 80,
+        reserve_price: 150,
+        embedding: woolCoatEmbedding,
+      },
+    ]);
+
+    const results = await searchAuctionsBySemanticQuery(
+      "second hand leather jacket",
+      0.5,
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0].title).toBe("Vintage Leather Jacket");
   });
 });
