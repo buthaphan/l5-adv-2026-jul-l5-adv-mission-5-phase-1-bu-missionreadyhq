@@ -6,7 +6,14 @@ This project is a Node.js backend for an auction application developed as part o
 
 The application uses MongoDB to store auction data and provides an API for searching auction items.
 
-As an experimental enhancement, Azure OpenAI embeddings are used to provide semantic similarity search. This allows auction items to be matched based on the meaning of the search query rather than only exact keyword matches.
+The project supports two search approaches:
+
+- **Keyword search** using MongoDB text matching.
+- **AI semantic search** using Azure OpenAI embeddings and cosine similarity.
+
+The AI search is an experimental enhancement that allows auction items to be matched based on the meaning of a search query rather than only exact keywords.
+
+---
 
 ## Technologies
 
@@ -20,10 +27,13 @@ As an experimental enhancement, Azure OpenAI embeddings are used to provide sema
 - OpenAI Node.js SDK
 - dotenv
 
+---
+
 ## Project Structure
 
 ```text
 mission5-trademe-backend/
+
 ├── cli.js
 ├── models/
 │   └── Auction.js
@@ -32,7 +42,9 @@ mission5-trademe-backend/
 │   ├── app.js
 │   ├── auctionService.js
 │   ├── db.js
-│   └── seeder.js
+│   ├── seeder.js
+│   ├── seederAI.js
+│   └── server.js
 ├── tests/
 │   ├── aiService.test.js
 │   ├── auction.test.js
@@ -44,37 +56,49 @@ mission5-trademe-backend/
 └── README.md
 ```
 
+---
+
 ## Prerequisites
 
-Before running the project, install:
+Install the following before running the project:
 
-- Node.js
-- MongoDB
-- npm
+- **Node.js**
+- **npm**
+- **MongoDB**
 
-For semantic search functionality, an Azure OpenAI resource and embedding model deployment are also required.
+For AI semantic search:
+
+- **Azure OpenAI resource**
+- **Azure OpenAI embedding model deployment**
+
+---
 
 ## Installation
 
-Clone the repository and install the dependencies:
+1. **Clone the repository:**
 
-```bash
-git clone <repository-url>
-cd mission5-trademe-backend
-npm install
-```
+   ```bash
+   git clone <repository-url>
+   cd l5-adv-2026-jul-l5-adv-mission-5-phase-1-bu-missionreadyhq
+   ```
 
-Create an environment file from the provided example:
+2. **Install dependencies:**
 
-```bash
-cp .env.example .env
-```
+   ```bash
+   npm install
+   ```
 
-Update `.env` with your local MongoDB and Azure OpenAI configuration.
+3. **Create the environment file:**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Update `.env`** with the required MongoDB and Azure OpenAI configuration.
+
+---
 
 ## Environment Variables
-
-The project uses the following environment variables:
 
 ```env
 MONGO_URI=mongodb://localhost:27017/trademe
@@ -85,31 +109,49 @@ AZURE_OPENAI_API_KEY=your_openai_key
 AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-small
 ```
 
-### MongoDB
+> **Note:** Do not commit `.env` or real API credentials to source control.
 
-`MONGO_URI` is used by the application and CLI seeder.
+- **MongoDB:** `MONGO_URI` is used by the application and CLI seeders. `TEST_MONGO_URI` is used by the automated tests.
+- **Azure OpenAI:** The Azure OpenAI variables are required for generating embeddings and using AI semantic search.
 
-`TEST_MONGO_URI` is used by the automated tests.
+---
 
-### Azure OpenAI
+## Running the Application
 
-The Azure OpenAI variables are required for generating embeddings and using semantic search.
+1. Make sure MongoDB is running.
+2. Start the server:
+   ```bash
+   npm start
+   ```
 
-Do not commit the `.env` file or real API credentials to source control.
+---
 
 ## Task 5: Seed Auction Data
 
-The project includes a command-line tool for adding sample auction data to MongoDB and clearing the auction collection.
+### Seed Standard Auction Data
 
-### Seed Sample Data
-
-Make sure MongoDB is running, then run:
+Run:
 
 ```bash
 npm run seed
 ```
 
-This inserts the sample auction data into MongoDB.
+This inserts the standard sample auction data into MongoDB.
+
+### Seed AI Auction Data
+
+Run:
+
+```bash
+npm run seedAI
+```
+
+The AI seeder:
+
+- Creates sample auction records.
+- Builds text representing each auction.
+- Generates an embedding using Azure OpenAI.
+- Stores the auction and its embedding in MongoDB.
 
 ### Clear Auction Data
 
@@ -119,66 +161,83 @@ To remove all auction data:
 npm run clear
 ```
 
-The seed data contains sample auction items with the following fields:
-
-- `title`
-- `description`
-- `start_price`
-- `reserve_price`
-
-The seed data is stored in `src/seeder.js` and is included in source control so team members can use the same data after cloning the repository.
+---
 
 ## Task 6: Display Similar Auction Items
 
-The application provides an API for searching auction items stored in MongoDB.
+The API supports both keyword search and AI semantic search.
 
 ### Keyword Search
 
-The keyword search endpoint is:
+Keyword search is the default search mode.
 
-```text
+```http
 GET /auctions/search?keyword=<search-term>
 ```
 
-For example:
+**Example:**
 
-```text
+```http
 GET /auctions/search?keyword=leather
 ```
 
-The search checks both the auction title and description and is case-insensitive.
+- The search checks the auction title and description and is case-insensitive.
+- The search mode can also be specified explicitly:
+  ```http
+  GET /auctions/search?keyword=leather&mode=keyword
+  ```
 
-### Semantic Search
+### AI Semantic Search
 
-As an experimental AI enhancement, the project also supports semantic auction search using Azure OpenAI embeddings.
+AI semantic search is selected using:
 
-The process is:
+```http
+GET /auctions/search?keyword=<search-term>&mode=ai
+```
+
+**Example:**
+
+```http
+GET /auctions/search?keyword=reliable%20ute%20for%20work&mode=ai
+```
+
+#### Semantic Search Process
 
 ```text
 Search query
      ↓
-Azure OpenAI embedding
+Azure OpenAI
      ↓
-Query embedding vector
+Query embedding
      ↓
-Compare with auction embeddings
+Retrieve auction embeddings
      ↓
-Cosine similarity
+Calculate cosine similarity
      ↓
-Rank auctions
+Rank results
      ↓
 Apply similarity threshold
      ↓
 Return similar auctions
 ```
 
-The semantic search compares the meaning of the search query with the meaning represented by each auction's embedding.
+- A default similarity threshold of `0.5` is used to remove results with low semantic similarity.
+- The embedding is stored in MongoDB because it is required for similarity calculations. However, the embedding is removed from the API response before results are returned to the client.
 
-A similarity threshold of `0.5` is used by default to exclude auctions with low semantic similarity.
+### Search Mode Selection
 
-## Running Tests
+The frontend or API client selects the search strategy using the `mode` query parameter.
 
-Run the complete automated test suite with:
+- **Keyword:** `GET /auctions/search?keyword=Toyota&mode=keyword`
+- **AI:** `GET /auctions/search?keyword=reliable%20ute%20for%20work&mode=ai`
+
+If `mode` is not provided, keyword search is used by default. This allows the existing keyword functionality to remain available while providing an experimental AI search option.
+
+---
+
+## Testing
+
+Run the complete automated test suite:
 
 ```bash
 npm test
@@ -187,17 +246,29 @@ npm test
 The tests cover:
 
 - MongoDB connection
-- CLI seeding
-- CLI data clearing
+- Database seeding
+- Database clearing
+- CLI commands
 - Auction creation
 - Keyword search
 - Semantic search
 - Embedding generation
 - Cosine similarity
-- Auction similarity calculation
 - Similarity ranking
 - Similarity threshold filtering
 
+**Current test result:**
+
+```text
+5 test suites passed
+24 tests passed
+```
+
+---
+
 ## Project Notes
 
-The semantic search functionality is an experimental generative AI enhancement for Task 6. The required task can be completed using keyword-based MongoDB search; Azure OpenAI was added to explore how generative AI can improve auction search by identifying semantically similar items.
+- The AI semantic search is an experimental enhancement for Task 6.
+- The required auction search functionality can be implemented using traditional keyword-based MongoDB search. Azure OpenAI was added to investigate how semantic search can improve the relevance of auction results.
+- The current semantic-search implementation retrieves auction embeddings and calculates similarity in the application layer.
+- For large datasets, this approach requires the application to process many embeddings. A future enhancement will investigate **MongoDB Vector Search** to move nearest-neighbour searching into MongoDB and improve performance and scalability.
