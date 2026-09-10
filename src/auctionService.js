@@ -32,10 +32,18 @@ export const searchAuctionsBySimilarity = async (queryEmbedding) => {
     embedding: { $exists: true, $ne: [] },
   });
 
-  const auctionsWithSimilarity = auctions.map((auction) => ({
-    ...auction.toObject(),
-    similarity: calculateAuctionSimilarity(queryEmbedding, auction),
-  }));
+  const auctionsWithSimilarity = auctions.map((auction) => {
+    const similarity = calculateAuctionSimilarity(queryEmbedding, auction);
+
+    const auctionData = auction.toObject();
+
+    delete auctionData.embedding;
+
+    return {
+      ...auctionData,
+      similarity,
+    };
+  });
 
   return rankAuctionsBySimilarity(auctionsWithSimilarity);
 };
