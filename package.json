@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "seed": "node cli.js --seed",
+    "seedAI": "node cli.js --seedAI",
     "clear": "node cli.js --clear"
   },
   "keywords": [],

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 import { connectDB } from "./src/db.js";
 import { seedData, clearData } from "./src/seeder.js";
+import { seedAIData } from "./src/seederAI.js";
 
 const flag = process.argv[2];
 
@@ -22,8 +23,15 @@ const run = async () => {
       await clearData();
 
       console.log("Database clearing completed.");
+    } else if (flag === "--seedAI") {
+      console.log("Starting AI database seeding process...");
+
+      await connectDB(process.env.MONGO_URI);
+      await seedAIData();
+
+      console.log("AI database seeding completed.");
     } else {
-      console.log("Usage: node cli.js --seed OR node cli.js --clear");
+      console.log("Usage: node cli.js --seed OR --clear OR --seedAI");
     }
   } finally {
     await mongoose.connection.close();
